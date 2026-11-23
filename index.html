@@ -312,6 +312,7 @@
     }
     #historyList .badge.terkirim { background: rgba(11,107,58,0.12); color: var(--uin-green-dark); }
     #historyList .badge.gagal { background: rgba(168,30,30,0.12); color: #8a1a1a; }
+    #historyList .badge.menunggu { background: rgba(201,162,39,0.2); color: #6b5310; }
     #historyEmpty { font-size: 13px; color: #4a5c50; }
 
     #toastStack {
@@ -423,9 +424,9 @@
     <div class="welcome-card">
       <div class="big-emblem" aria-hidden="true"></div>
       <h1><em>Kantor Virtual</em> Humas UIN Walisongo</h1>
-      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf, lalu isi formulir Beri Tugas. Klaus akan meneruskan ke staf yang tepat.</p>
+      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf, lalu isi formulir Beri Tugas. Kirim akan membuka issue GitHub; setelah Anda klik Create, tugas diteruskan ke Klaus.</p>
       <button type="button" id="enterBtn">Masuk ke Kantor</button>
-      <p class="keys">WASD atau panah untuk berjalan · Mouse untuk melihat · Klik staf untuk berinteraksi · V ganti sudut pandang · ⚙️ untuk webhook</p>
+      <p class="keys">WASD atau panah untuk berjalan · Mouse untuk melihat · Klik staf untuk berinteraksi · V ganti sudut pandang · Kirim tugas lewat GitHub</p>
     </div>
   </div>
 
@@ -512,20 +513,8 @@
         <button type="button" class="cam-toggle" id="closeSettings" aria-label="Tutup">×</button>
       </header>
       <div class="modal-body">
-        <p class="help-note">Buka tab Routines di Grok Bot &gt; &lsquo;Tugas dari Kantor Virtual 3D&rsquo;, salin Webhook URL dan Authorization header. Data ini hanya disimpan di peramban Anda, tidak pernah dikirim ke repositori.</p>
-        <form id="settingsForm" autocomplete="off">
-          <label>URL Webhook
-            <input id="webhookUrl" name="webhookUrl" type="url" inputmode="url" spellcheck="false" placeholder="https://…" value="https://api2.cursor.sh/automations/webhook/056c7bee-0dc7-5af9-bd32-98cad3465827" />
-          </label>
-          <label>Authorization header
-            <input id="webhookAuth" name="webhookAuth" type="password" spellcheck="false" autocomplete="off" placeholder="Bearer …" />
-          </label>
-          <label class="show-auth"><input type="checkbox" id="showAuth" /> Tampilkan header</label>
-          <div class="modal-actions">
-            <button type="submit" class="gold-btn" id="saveSettings">Simpan</button>
-            <button type="button" class="ghost-btn" id="clearSettings">Hapus</button>
-          </div>
-        </form>
+        <p class="help-note">Tugas tidak dikirim langsung dari peramban (CORS memblokir webhook). Alurnya: isi formulir <b>Beri Tugas</b> di meja staf atau Klaus, klik <b>Kirim</b>, lalu di tab GitHub klik <b>Create issue</b> (masuk sebagai Neinareno). GitHub Actions akan meneruskan tugas ke Klaus dan menulis komentar di issue.</p>
+        <p class="help-note">Kunci webhook tidak perlu ditempel di halaman ini. Simpan Authorization header sebagai secret repositori bernama <b>GROK_WEBHOOK_AUTH</b> (boleh dengan atau tanpa awalan Bearer).</p>
       </div>
     </div>
   </div>
@@ -1908,34 +1897,9 @@ function drawMinimap() {
   mmx.restore();
 }
 
-const LS_URL = 'kv3d.webhookUrl';
-const LS_AUTH = 'kv3d.authHeader';
 const LS_HIST = 'kv3d.taskHistory';
-const DEFAULT_WEBHOOK_URL = 'https://api2.cursor.sh/automations/webhook/056c7bee-0dc7-5af9-bd32-98cad3465827';
+const ISSUE_NEW_URL = 'https://github.com/Neinareno/kantor-virtual-3d/issues/new';
 const UI_SEL = '.hud, #infoPanel, #welcome, #touch, button, aside, a, #settingsModal, #historyModal, #toastStack, input, textarea, select, label, form';
-
-function normalizeAuth(raw) {
-  const v = String(raw || '').trim();
-  if (!v) return '';
-  if (/^bearer\s+/i.test(v)) return 'Bearer ' + v.replace(/^bearer\s+/i, '').trim();
-  return 'Bearer ' + v;
-}
-
-function getSettings() {
-  try {
-    return {
-      url: (localStorage.getItem(LS_URL) || DEFAULT_WEBHOOK_URL).trim(),
-      auth: normalizeAuth(localStorage.getItem(LS_AUTH) || '')
-    };
-  } catch (err) {
-    return { url: DEFAULT_WEBHOOK_URL, auth: '' };
-  }
-}
-
-function hasSettings() {
-  const s = getSettings();
-  return !!(s.url && s.auth);
-}
 
 function isTypingTarget(el) {
   if (!el) return false;
@@ -1984,12 +1948,13 @@ function renderHistory() {
   empty.style.display = list.length ? 'none' : 'block';
   list.forEach((item) => {
     const li = document.createElement('li');
-    const status = item.status === 'terkirim' ? 'terkirim' : 'gagal';
+    const status = ['terkirim', 'gagal', 'menunggu'].includes(item.status) ? item.status : 'gagal';
     const tugas = String(item.tugas || '').trim();
     const short = tugas.length > 140 ? tugas.slice(0, 137) + '…' : tugas;
-    li.innerHTML = `<div class="meta"><span>${formatWhen(item.dikirim_pada)}</span><span class="badge ${status}">${status}</span></div>
-      <div><b>${item.staf || ''}</b>${item.jabatan ? ' · ' + item.jabatan : ''}</div>
-      <div>${short}</div>`;
+    const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    li.innerHTML = `<div class="meta"><span>${esc(formatWhen(item.dikirim_pada))}</span><span class="badge ${status}">${status}</span></div>
+      <div><b>${esc(item.staf || '')}</b>${item.jabatan ? ' · ' + esc(item.jabatan) : ''}</div>
+      <div>${esc(short)}</div>`;
     ul.appendChild(li);
   });
 }
@@ -2008,18 +1973,7 @@ function anyModalOpen() {
     || document.getElementById('historyModal').classList.contains('open');
 }
 
-function fillSettingsForm() {
-  try {
-    document.getElementById('webhookUrl').value = localStorage.getItem(LS_URL) || DEFAULT_WEBHOOK_URL;
-    document.getElementById('webhookAuth').value = localStorage.getItem(LS_AUTH) || '';
-  } catch (err) {
-    document.getElementById('webhookUrl').value = DEFAULT_WEBHOOK_URL;
-    document.getElementById('webhookAuth').value = '';
-  }
-}
-
 function openSettings() {
-  fillSettingsForm();
   openModal('settingsModal');
 }
 
@@ -2038,7 +1992,35 @@ function recordTask(entry) {
   saveHistory(list);
 }
 
-async function sendTask(ev) {
+function ringkasTugas(tugas) {
+  const one = String(tugas || '').replace(/\s+/g, ' ').trim();
+  return one.length > 48 ? one.slice(0, 45) + '…' : one;
+}
+
+function buildIssueUrl(payload) {
+  let title = '[Tugas] ' + payload.staf + ': ' + ringkasTugas(payload.tugas);
+  if (title.length > 240) title = title.slice(0, 237) + '…';
+  const body = [
+    '## Tugas dari Kantor Virtual 3D',
+    '',
+    '- **Staf:** ' + payload.staf,
+    '- **Jabatan:** ' + payload.jabatan,
+    '- **Tugas:** ' + payload.tugas,
+    '- **Prioritas:** ' + (payload.prioritas || '—'),
+    '- **Tenggat:** ' + (payload.tenggat || '—'),
+    '- **Dikirim pada:** ' + payload.dikirim_pada,
+    '',
+    '<!-- tugas-json -->',
+    '```json',
+    JSON.stringify(payload, null, 2),
+    '```',
+    ''
+  ].join('\n');
+  const params = new URLSearchParams({ title, labels: 'tugas', body });
+  return ISSUE_NEW_URL + '?' + params.toString();
+}
+
+function sendTask(ev) {
   ev.preventDefault();
   ev.stopPropagation();
   const s = staffById(selectedId);
@@ -2052,70 +2034,35 @@ async function sendTask(ev) {
     document.getElementById('tugasText').focus();
     return;
   }
-  if (!hasSettings()) {
-    showToast('Lengkapi URL webhook dan Authorization header di Pengaturan.', 'err');
-    openSettings();
-    return;
-  }
-  const prioritas = document.getElementById('tugasPrioritas').value.trim();
-  const tenggat = document.getElementById('tugasTenggat').value.trim();
-  const body = {
+  const payload = {
     staf: s.name,
     jabatan: s.title,
     tugas,
-    prioritas,
-    tenggat,
+    prioritas: document.getElementById('tugasPrioritas').value.trim(),
+    tenggat: document.getElementById('tugasTenggat').value.trim(),
     dikirim_pada: new Date().toISOString(),
     sumber: 'kantor-virtual-3d'
   };
-  const { url, auth } = getSettings();
-  const btn = document.getElementById('btnKirimTugas');
-  btn.disabled = true;
-  const prevLabel = btn.textContent;
-  btn.textContent = 'Mengirim…';
-  let status = 'gagal';
-  let errMsg = '';
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': auth
-      },
-      body: JSON.stringify(body)
-    });
-    if (res.ok) {
-      status = 'terkirim';
-      showToast('Tugas terkirim ke ' + s.name + '.');
-      document.getElementById('tugasText').value = '';
-      document.getElementById('tugasPrioritas').value = '';
-      document.getElementById('tugasTenggat').value = '';
-    } else {
-      errMsg = 'HTTP ' + res.status;
-      showToast('Gagal mengirim tugas (' + errMsg + ').', 'err');
-    }
-  } catch (err) {
-    const isNetwork = err && (err.name === 'TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(String(err.message || err)));
-    if (isNetwork) {
-      errMsg = 'CORS';
-      showToast('Browser memblokir pengiriman (CORS)', 'err');
-    } else {
-      errMsg = String(err && err.message || err);
-      showToast('Gagal mengirim tugas.', 'err');
-    }
-  }
+  const issueUrl = buildIssueUrl(payload);
+  const opened = window.open(issueUrl, '_blank', 'noopener,noreferrer');
   recordTask({
-    staf: body.staf,
-    jabatan: body.jabatan,
-    tugas: body.tugas,
-    prioritas: body.prioritas,
-    tenggat: body.tenggat,
-    dikirim_pada: body.dikirim_pada,
-    status,
-    error: errMsg || undefined
+    staf: payload.staf,
+    jabatan: payload.jabatan,
+    tugas: payload.tugas,
+    prioritas: payload.prioritas,
+    tenggat: payload.tenggat,
+    dikirim_pada: payload.dikirim_pada,
+    status: opened ? 'menunggu' : 'gagal',
+    error: opened ? undefined : 'popup-blocked'
   });
-  btn.disabled = false;
-  btn.textContent = prevLabel;
+  if (!opened) {
+    showToast('Izinkan jendela baru, lalu klik Kirim lagi. Klik Create di GitHub untuk mengirim tugas.', 'err');
+    return;
+  }
+  document.getElementById('tugasText').value = '';
+  document.getElementById('tugasPrioritas').value = '';
+  document.getElementById('tugasTenggat').value = '';
+  showToast('Klik Create di GitHub untuk mengirim tugas');
 }
 
 function onPointerClick(ev) {
@@ -2302,45 +2249,6 @@ function boot() {
   });
   document.getElementById('historyModal').addEventListener('click', (e) => {
     if (e.target.id === 'historyModal') closeHistory();
-  });
-  document.getElementById('showAuth').addEventListener('change', (e) => {
-    document.getElementById('webhookAuth').type = e.target.checked ? 'text' : 'password';
-  });
-  document.getElementById('settingsForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = document.getElementById('webhookUrl').value.trim();
-    const authRaw = document.getElementById('webhookAuth').value.trim();
-    if (!url || !authRaw) {
-      showToast('Isi URL webhook dan Authorization header.', 'err');
-      return;
-    }
-    try {
-      const u = new URL(url);
-      if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error('bad proto');
-    } catch (err) {
-      showToast('URL webhook tidak valid.', 'err');
-      return;
-    }
-    try {
-      localStorage.setItem(LS_URL, url);
-      localStorage.setItem(LS_AUTH, authRaw);
-    } catch (err) {
-      showToast('Gagal menyimpan pengaturan di peramban.', 'err');
-      return;
-    }
-    showToast('Pengaturan disimpan di peramban ini.');
-    closeSettings();
-  });
-  document.getElementById('clearSettings').addEventListener('click', (e) => {
-    e.stopPropagation();
-    try {
-      localStorage.removeItem(LS_URL);
-      localStorage.removeItem(LS_AUTH);
-    } catch (err) { /* ignore */ }
-    document.getElementById('webhookUrl').value = DEFAULT_WEBHOOK_URL;
-    document.getElementById('webhookAuth').value = '';
-    showToast('Pengaturan dihapus dari peramban ini. URL webhook kembali ke nilai bawaan.');
   });
   document.getElementById('clearHistory').addEventListener('click', (e) => {
     e.stopPropagation();

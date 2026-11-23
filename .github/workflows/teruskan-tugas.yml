@@ -1,0 +1,73 @@
+name: Teruskan tugas ke Klaus
+
+on:
+  issues:
+    types: [opened, labeled]
+
+concurrency:
+  group: teruskan-tugas-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  teruskan:
+    name: Teruskan ke webhook Klaus
+    runs-on: ubuntu-latest
+    if: >
+      github.event.issue.user.login == 'Neinareno' &&
+      (
+        (
+          github.event.action == 'opened' &&
+          (
+            contains(join(github.event.issue.labels.*.name, ','), 'tugas') ||
+            startsWith(github.event.issue.title, '[Tugas]')
+          )
+        ) ||
+        (github.event.action == 'labeled' && github.event.label.name == 'tugas')
+      )
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lewati jika sudah diteruskan
+        id: skip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          comments="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE}/comments" --jq '.[].body')"
+          if printf '%s\n' "$comments" | grep -Fq 'Tugas diteruskan ke Klaus'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Issue ini sudah diteruskan sebelumnya."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Teruskan ke Klaus
+        id: kirim
+        if: steps.skip.outputs.skip != 'true'
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          AUTH_RAW: ${{ secrets.GROK_WEBHOOK_AUTH }}
+        run: python3 .github/scripts/teruskan-tugas.py
+
+      - name: Komentar hasil
+        if: always() && steps.kirim.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+          OUTCOME: ${{ steps.kirim.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$OUTCOME" = "success" ]; then
+            msg='Tugas diteruskan ke Klaus ✅'
+          else
+            msg='Gagal meneruskan tugas ke Klaus ❌ Periksa secret GROK_WEBHOOK_AUTH dan log workflow.'
+          fi
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "$msg"
