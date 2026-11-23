@@ -12,5 +12,9 @@ Bisa juga membuka `index.html` langsung di browser (perlu internet untuk memuat 
 - **Shift**: berjalan cepat
 - **Mouse**: melihat sekeliling (klik untuk mengunci kursor, Esc untuk melepas)
 - **V**: ganti sudut pandang (orang ketiga / orang pertama)
-- Klik meja atau staf untuk melihat tugas, lalu **Beri Tugas**
+- Klik meja atau staf untuk melihat profil, lalu isi formulir **Beri Tugas**
 - Daftar staf atau peta: pindah ke meja
+- **Pengaturan**: simpan URL webhook dan Authorization header (hanya di peramban, tidak masuk repositori)
+- **Riwayat Tugas**: lihat tugas yang sudah dikirim
+
+Agar tugas sampai ke Klaus, buka tab Routines di Grok Bot > ‘Tugas dari Kantor Virtual 3D’, lalu salin Webhook URL dan Authorization header ke Pengaturan.

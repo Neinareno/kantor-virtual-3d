@@ -229,21 +229,111 @@
       box-shadow: 0 0 0 4px rgba(30,168,90,0.25); animation: pulse 1.6s infinite;
     }
     @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(30,168,90,0); } }
-    #btnTugas {
+    .gold-btn {
       width: 100%; border: 0; cursor: pointer;
       background: linear-gradient(180deg, var(--uin-gold-light), var(--uin-gold));
       color: #1a1404; font: 800 14px "Plus Jakarta Sans", sans-serif;
       padding: 11px 14px; border-radius: 12px;
       box-shadow: 0 4px 0 #8b6e12;
     }
-    #btnTugas:hover { filter: brightness(1.05); }
-    #btnTugas:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b6e12; }
-    #tugasHint {
-      display: none; margin-top: 12px; font-size: 13px; line-height: 1.5;
-      background: #fff; border-left: 3px solid var(--uin-green);
-      padding: 10px 12px; border-radius: 0 10px 10px 0; color: #1a241c;
+    .gold-btn:hover { filter: brightness(1.05); }
+    .gold-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b6e12; }
+    .gold-btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+    .ghost-btn {
+      border: 1px solid rgba(11,107,58,0.35);
+      background: transparent; color: var(--uin-green-dark);
+      font: 700 12px "Plus Jakarta Sans", sans-serif;
+      padding: 8px 12px; border-radius: 10px; cursor: pointer;
     }
-    #tugasHint.show { display: block; }
+    .ghost-btn:hover { background: rgba(11,107,58,0.08); }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    #tugasForm { margin-top: 4px; }
+    #tugasForm h4 {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--uin-green); margin-bottom: 8px; font-weight: 800;
+    }
+    #tugasForm label, #settingsForm label {
+      display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--ink);
+    }
+    #tugasForm textarea, #tugasForm input, #tugasForm select,
+    #settingsForm input[type="text"], #settingsForm input[type="password"], #settingsForm input[type="url"] {
+      width: 100%; margin-top: 4px; padding: 8px 10px;
+      border: 1px solid rgba(11,107,58,0.25); border-radius: 10px;
+      font: 500 13px "Plus Jakarta Sans", sans-serif; color: var(--ink);
+      background: #fff; outline: none;
+    }
+    #tugasForm textarea { min-height: 78px; resize: vertical; }
+    #tugasForm textarea:focus, #tugasForm input:focus, #tugasForm select:focus,
+    #settingsForm input:focus { border-color: var(--uin-gold); box-shadow: 0 0 0 3px rgba(201,162,39,0.25); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    #infoPanel { max-height: calc(100% - 32px); overflow: auto; }
+
+    .modal-back {
+      position: fixed; inset: 0; z-index: 22;
+      background: rgba(3, 21, 12, 0.55);
+      display: none; align-items: center; justify-content: center;
+      padding: 24px; pointer-events: auto;
+    }
+    .modal-back.open { display: flex; }
+    .modal-card {
+      width: min(460px, 100%);
+      background: linear-gradient(180deg, #f8f4ea, #efe6d0);
+      color: var(--ink);
+      border-radius: 18px;
+      border: 1px solid var(--uin-gold);
+      box-shadow: 0 0 0 3px rgba(11,107,58,0.35), 0 24px 60px rgba(0,0,0,0.45);
+      max-height: min(86vh, 720px); overflow: auto;
+    }
+    .modal-card header {
+      background: linear-gradient(135deg, var(--uin-green), var(--uin-green-dark));
+      color: #fff8e7; padding: 16px 18px 14px;
+      border-radius: 17px 17px 0 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-card header h3 { font-size: 16px; font-weight: 800; }
+    .modal-card .modal-body { padding: 16px 18px 18px; }
+    .help-note {
+      font-size: 13px; line-height: 1.55; margin-bottom: 14px;
+      background: #fff; border-left: 3px solid var(--uin-green);
+      padding: 10px 12px; border-radius: 0 10px 10px 0;
+    }
+    .modal-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .modal-actions .gold-btn { flex: 1; }
+    .show-auth { font-weight: 600; font-size: 12px; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+
+    #historyList { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    #historyList li {
+      background: #fff; border-radius: 12px; padding: 10px 12px;
+      border: 1px solid rgba(11,107,58,0.12); font-size: 13px; line-height: 1.45;
+    }
+    #historyList .meta { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-size: 11px; font-weight: 700; }
+    #historyList .badge {
+      border-radius: 999px; padding: 2px 8px; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    #historyList .badge.terkirim { background: rgba(11,107,58,0.12); color: var(--uin-green-dark); }
+    #historyList .badge.gagal { background: rgba(168,30,30,0.12); color: #8a1a1a; }
+    #historyEmpty { font-size: 13px; color: #4a5c50; }
+
+    #toastStack {
+      position: fixed; z-index: 25; top: 72px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none; width: min(420px, calc(100% - 24px));
+    }
+    .toast {
+      pointer-events: auto;
+      background: #0b3a24; color: #f6f1e4;
+      border: 1px solid var(--uin-gold);
+      border-radius: 12px; padding: 10px 14px;
+      font-size: 13px; font-weight: 600; line-height: 1.45;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    }
+    .toast.ok { border-color: #7be39a; }
+    .toast.err { background: #3a1010; border-color: #e07a3d; }
+    @media (max-width: 720px) {
+      .form-row { grid-template-columns: 1fr; }
+      .top-actions { max-width: 62%; }
+    }
 
     #welcome {
       position: fixed; inset: 0; z-index: 20;
@@ -333,9 +423,9 @@
     <div class="welcome-card">
       <div class="big-emblem" aria-hidden="true"></div>
       <h1><em>Kantor Virtual</em> Humas UIN Walisongo</h1>
-      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf untuk melihat tugasnya, lalu tugaskan lewat chat ke Klaus.</p>
+      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf, lalu isi formulir Beri Tugas. Klaus akan meneruskan ke staf yang tepat.</p>
       <button type="button" id="enterBtn">Masuk ke Kantor</button>
-      <p class="keys">WASD atau panah untuk berjalan · Mouse untuk melihat · Klik staf untuk berinteraksi · V ganti sudut pandang</p>
+      <p class="keys">WASD atau panah untuk berjalan · Mouse untuk melihat · Klik staf untuk berinteraksi · V ganti sudut pandang · ⚙️ untuk webhook</p>
     </div>
   </div>
 
@@ -344,7 +434,11 @@
       <div class="emblem" aria-hidden="true"></div>
       <h1>Humas UIN Walisongo Semarang<span>Kantor Virtual 3D</span></h1>
     </div>
-    <button type="button" class="cam-toggle" id="camBtn">Sudut: Orang Ketiga</button>
+    <div class="top-actions">
+      <button type="button" class="cam-toggle" id="historyBtn">Riwayat Tugas</button>
+      <button type="button" class="cam-toggle" id="settingsBtn">⚙️ Pengaturan</button>
+      <button type="button" class="cam-toggle" id="camBtn">Sudut: Orang Ketiga</button>
+    </div>
   </div>
 
   <aside id="staffPanel" class="hud">
@@ -359,7 +453,7 @@
     <div>Mouse — lihat sekeliling (klik layar untuk mengunci kursor)</div>
     <div><kbd>Esc</kbd> — lepas kursor</div>
     <div><kbd>V</kbd> — ganti sudut pandang</div>
-    <div>Klik meja / staf — buka profil · Daftar staf — pindah ke meja</div>
+    <div>Klik meja / staf — buka profil &amp; beri tugas · Daftar staf — pindah ke meja</div>
   </div>
 
   <div id="minimapWrap" class="hud">
@@ -382,8 +476,27 @@
     <div class="info-body">
       <p class="desc" id="infoDesc"></p>
       <div class="status"><i></i><span id="infoStatus"></span></div>
-      <button type="button" id="btnTugas">Beri Tugas</button>
-      <div id="tugasHint">Tugaskan lewat chat ke Klaus, nanti Klaus yang mendelegasikan.</div>
+      <form id="tugasForm" autocomplete="off">
+        <h4>Beri Tugas</h4>
+        <label>Tugas
+          <textarea id="tugasText" name="tugas" required placeholder="Tuliskan tugas yang ingin didelegasikan…"></textarea>
+        </label>
+        <div class="form-row">
+          <label>Prioritas
+            <select id="tugasPrioritas" name="prioritas">
+              <option value="">Biasa</option>
+              <option value="rendah">Rendah</option>
+              <option value="sedang">Sedang</option>
+              <option value="tinggi">Tinggi</option>
+              <option value="mendesak">Mendesak</option>
+            </select>
+          </label>
+          <label>Tenggat
+            <input id="tugasTenggat" name="tenggat" type="datetime-local" />
+          </label>
+        </div>
+        <button type="submit" class="gold-btn" id="btnKirimTugas">Kirim</button>
+      </form>
     </div>
   </div>
 
@@ -391,6 +504,49 @@
     <div class="joy-base" id="joyBase"><div class="joy-knob" id="joyKnob"></div></div>
     <div class="look-hint">Geser di sisi kanan layar untuk melihat</div>
   </div>
+
+  <div id="settingsModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card">
+      <header>
+        <h3 id="settingsTitle">⚙️ Pengaturan</h3>
+        <button type="button" class="cam-toggle" id="closeSettings" aria-label="Tutup">×</button>
+      </header>
+      <div class="modal-body">
+        <p class="help-note">Buka tab Routines di Grok Bot &gt; &lsquo;Tugas dari Kantor Virtual 3D&rsquo;, salin Webhook URL dan Authorization header. Data ini hanya disimpan di peramban Anda, tidak pernah dikirim ke repositori.</p>
+        <form id="settingsForm" autocomplete="off">
+          <label>URL Webhook
+            <input id="webhookUrl" name="webhookUrl" type="url" inputmode="url" spellcheck="false" placeholder="https://…" />
+          </label>
+          <label>Authorization header
+            <input id="webhookAuth" name="webhookAuth" type="password" spellcheck="false" autocomplete="off" placeholder="Bearer …" />
+          </label>
+          <label class="show-auth"><input type="checkbox" id="showAuth" /> Tampilkan header</label>
+          <div class="modal-actions">
+            <button type="submit" class="gold-btn" id="saveSettings">Simpan</button>
+            <button type="button" class="ghost-btn" id="clearSettings">Hapus</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyModal" class="modal-back" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal-card">
+      <header>
+        <h3 id="historyTitle">Riwayat Tugas</h3>
+        <button type="button" class="cam-toggle" id="closeHistory" aria-label="Tutup">×</button>
+      </header>
+      <div class="modal-body">
+        <p id="historyEmpty">Belum ada tugas yang dikirim dari kantor ini.</p>
+        <ul id="historyList"></ul>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" id="clearHistory">Hapus riwayat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastStack" aria-live="polite"></div>
 
   <script type="module">
 import * as THREE from 'three';
@@ -1661,7 +1817,6 @@ function openInfo(id) {
   const c = '#' + s.color.toString(16).padStart(6, '0');
   chip.style.background = `radial-gradient(circle at 35% 30%, #fff8, ${c})`;
   document.getElementById('infoHead').classList.toggle('boss', !!s.isBoss);
-  document.getElementById('tugasHint').classList.remove('show');
   const panel = document.getElementById('infoPanel');
   panel.style.display = 'block';
   panel.classList.add('open');
@@ -1753,8 +1908,218 @@ function drawMinimap() {
   mmx.restore();
 }
 
+const LS_URL = 'kv3d.webhookUrl';
+const LS_AUTH = 'kv3d.authHeader';
+const LS_HIST = 'kv3d.taskHistory';
+const UI_SEL = '.hud, #infoPanel, #welcome, #touch, button, aside, a, #settingsModal, #historyModal, #toastStack, input, textarea, select, label, form';
+
+function normalizeAuth(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return '';
+  if (/^bearer\s+/i.test(v)) return 'Bearer ' + v.replace(/^bearer\s+/i, '').trim();
+  return 'Bearer ' + v;
+}
+
+function getSettings() {
+  try {
+    return {
+      url: (localStorage.getItem(LS_URL) || '').trim(),
+      auth: normalizeAuth(localStorage.getItem(LS_AUTH) || '')
+    };
+  } catch (err) {
+    return { url: '', auth: '' };
+  }
+}
+
+function hasSettings() {
+  const s = getSettings();
+  return !!(s.url && s.auth);
+}
+
+function isTypingTarget(el) {
+  if (!el) return false;
+  const tag = (el.tagName || '').toUpperCase();
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
+function showToast(message, kind = 'ok') {
+  const stack = document.getElementById('toastStack');
+  if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind === 'err' ? 'err' : 'ok');
+  el.textContent = message;
+  stack.appendChild(el);
+  setTimeout(() => { el.remove(); }, 5200);
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(LS_HIST);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveHistory(list) {
+  try { localStorage.setItem(LS_HIST, JSON.stringify(list.slice(0, 50))); }
+  catch (err) { /* abaikan kuota */ }
+}
+
+function formatWhen(iso) {
+  try {
+    return new Date(iso).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+  } catch (err) {
+    return iso;
+  }
+}
+
+function renderHistory() {
+  const list = loadHistory();
+  const ul = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+  ul.innerHTML = '';
+  empty.style.display = list.length ? 'none' : 'block';
+  list.forEach((item) => {
+    const li = document.createElement('li');
+    const status = item.status === 'terkirim' ? 'terkirim' : 'gagal';
+    const tugas = String(item.tugas || '').trim();
+    const short = tugas.length > 140 ? tugas.slice(0, 137) + '…' : tugas;
+    li.innerHTML = `<div class="meta"><span>${formatWhen(item.dikirim_pada)}</span><span class="badge ${status}">${status}</span></div>
+      <div><b>${item.staf || ''}</b>${item.jabatan ? ' · ' + item.jabatan : ''}</div>
+      <div>${short}</div>`;
+    ul.appendChild(li);
+  });
+}
+
+function openModal(id) {
+  if (document.pointerLockElement) document.exitPointerLock();
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function anyModalOpen() {
+  return document.getElementById('settingsModal').classList.contains('open')
+    || document.getElementById('historyModal').classList.contains('open');
+}
+
+function fillSettingsForm() {
+  try {
+    document.getElementById('webhookUrl').value = localStorage.getItem(LS_URL) || '';
+    document.getElementById('webhookAuth').value = localStorage.getItem(LS_AUTH) || '';
+  } catch (err) {
+    document.getElementById('webhookUrl').value = '';
+    document.getElementById('webhookAuth').value = '';
+  }
+}
+
+function openSettings() {
+  fillSettingsForm();
+  openModal('settingsModal');
+}
+
+function closeSettings() { closeModal('settingsModal'); }
+
+function openHistory() {
+  renderHistory();
+  openModal('historyModal');
+}
+
+function closeHistory() { closeModal('historyModal'); }
+
+function recordTask(entry) {
+  const list = loadHistory();
+  list.unshift(entry);
+  saveHistory(list);
+}
+
+async function sendTask(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const s = staffById(selectedId);
+  if (!s) {
+    showToast('Pilih staf terlebih dahulu.', 'err');
+    return;
+  }
+  const tugas = document.getElementById('tugasText').value.trim();
+  if (!tugas) {
+    showToast('Isi tugas terlebih dahulu.', 'err');
+    document.getElementById('tugasText').focus();
+    return;
+  }
+  if (!hasSettings()) {
+    showToast('Lengkapi URL webhook dan Authorization header di Pengaturan.', 'err');
+    openSettings();
+    return;
+  }
+  const prioritas = document.getElementById('tugasPrioritas').value.trim();
+  const tenggat = document.getElementById('tugasTenggat').value.trim();
+  const body = {
+    staf: s.name,
+    jabatan: s.title,
+    tugas,
+    prioritas,
+    tenggat,
+    dikirim_pada: new Date().toISOString(),
+    sumber: 'kantor-virtual-3d'
+  };
+  const { url, auth } = getSettings();
+  const btn = document.getElementById('btnKirimTugas');
+  btn.disabled = true;
+  const prevLabel = btn.textContent;
+  btn.textContent = 'Mengirim…';
+  let status = 'gagal';
+  let errMsg = '';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': auth
+      },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      status = 'terkirim';
+      showToast('Tugas terkirim ke ' + s.name + '.');
+      document.getElementById('tugasText').value = '';
+      document.getElementById('tugasPrioritas').value = '';
+      document.getElementById('tugasTenggat').value = '';
+    } else {
+      errMsg = 'HTTP ' + res.status;
+      showToast('Gagal mengirim tugas (' + errMsg + ').', 'err');
+    }
+  } catch (err) {
+    const isNetwork = err && (err.name === 'TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(String(err.message || err)));
+    if (isNetwork) {
+      errMsg = 'CORS';
+      showToast('Browser memblokir pengiriman (CORS)', 'err');
+    } else {
+      errMsg = String(err && err.message || err);
+      showToast('Gagal mengirim tugas.', 'err');
+    }
+  }
+  recordTask({
+    staf: body.staf,
+    jabatan: body.jabatan,
+    tugas: body.tugas,
+    prioritas: body.prioritas,
+    tenggat: body.tenggat,
+    dikirim_pada: body.dikirim_pada,
+    status,
+    error: errMsg || undefined
+  });
+  btn.disabled = false;
+  btn.textContent = prevLabel;
+}
+
 function onPointerClick(ev) {
-  if (ev.target.closest && ev.target.closest('.hud, #infoPanel, #welcome, #touch, button, aside, a')) return;
+  if (ev.target.closest && ev.target.closest(UI_SEL)) return;
+  if (anyModalOpen()) return;
   if (document.getElementById('welcome').style.display !== 'none' && document.getElementById('welcome').offsetParent !== null) return;
   const panel = document.getElementById('infoPanel');
   if (panel.classList.contains('open') && ev.target.closest && ev.target.closest('#infoPanel')) return;
@@ -1897,11 +2262,20 @@ function boot() {
   renderer.domElement.addEventListener('mousemove', updateHover);
   document.addEventListener('click', onPointerClick);
   document.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') {
+      if (document.getElementById('settingsModal').classList.contains('open')) { closeSettings(); return; }
+      if (document.getElementById('historyModal').classList.contains('open')) { closeHistory(); return; }
+      closeInfo();
+      return;
+    }
+    if (isTypingTarget(e.target) || anyModalOpen()) return;
     keys[e.code] = true;
     if (e.code === 'KeyV') setThirdPerson(!thirdPerson);
-    if (e.code === 'Escape') closeInfo();
   });
-  document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  document.addEventListener('keyup', (e) => {
+    if (isTypingTarget(e.target)) return;
+    keys[e.code] = false;
+  });
   document.addEventListener('pointerlockchange', () => {
     pointerLocked = document.pointerLockElement === renderer.domElement;
     document.body.classList.toggle('locked', pointerLocked);
@@ -1918,10 +2292,62 @@ function boot() {
     setThirdPerson(!thirdPerson);
   });
   document.getElementById('closeInfo').addEventListener('click', (e) => { e.stopPropagation(); closeInfo(); });
-  document.getElementById('btnTugas').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('tugasHint').classList.add('show');
+  document.getElementById('settingsBtn').addEventListener('click', (e) => { e.stopPropagation(); openSettings(); });
+  document.getElementById('closeSettings').addEventListener('click', (e) => { e.stopPropagation(); closeSettings(); });
+  document.getElementById('historyBtn').addEventListener('click', (e) => { e.stopPropagation(); openHistory(); });
+  document.getElementById('closeHistory').addEventListener('click', (e) => { e.stopPropagation(); closeHistory(); });
+  document.getElementById('settingsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'settingsModal') closeSettings();
   });
+  document.getElementById('historyModal').addEventListener('click', (e) => {
+    if (e.target.id === 'historyModal') closeHistory();
+  });
+  document.getElementById('showAuth').addEventListener('change', (e) => {
+    document.getElementById('webhookAuth').type = e.target.checked ? 'text' : 'password';
+  });
+  document.getElementById('settingsForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = document.getElementById('webhookUrl').value.trim();
+    const authRaw = document.getElementById('webhookAuth').value.trim();
+    if (!url || !authRaw) {
+      showToast('Isi URL webhook dan Authorization header.', 'err');
+      return;
+    }
+    try {
+      const u = new URL(url);
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error('bad proto');
+    } catch (err) {
+      showToast('URL webhook tidak valid.', 'err');
+      return;
+    }
+    try {
+      localStorage.setItem(LS_URL, url);
+      localStorage.setItem(LS_AUTH, authRaw);
+    } catch (err) {
+      showToast('Gagal menyimpan pengaturan di peramban.', 'err');
+      return;
+    }
+    showToast('Pengaturan disimpan di peramban ini.');
+    closeSettings();
+  });
+  document.getElementById('clearSettings').addEventListener('click', (e) => {
+    e.stopPropagation();
+    try {
+      localStorage.removeItem(LS_URL);
+      localStorage.removeItem(LS_AUTH);
+    } catch (err) { /* ignore */ }
+    document.getElementById('webhookUrl').value = '';
+    document.getElementById('webhookAuth').value = '';
+    showToast('Pengaturan dihapus dari peramban ini.');
+  });
+  document.getElementById('clearHistory').addEventListener('click', (e) => {
+    e.stopPropagation();
+    try { localStorage.removeItem(LS_HIST); } catch (err) { /* ignore */ }
+    renderHistory();
+    showToast('Riwayat tugas dihapus.');
+  });
+  document.getElementById('tugasForm').addEventListener('submit', sendTask);
   document.getElementById('enterBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('welcome').style.display = 'none';
@@ -1955,7 +2381,9 @@ function boot() {
     errors: consoleErrors.slice(),
     pos: player.position.toArray(),
     thirdPerson,
-    staff: STAFF.map(s => s.id)
+    staff: STAFF.map(s => s.id),
+    hasForm: !!document.getElementById('tugasForm'),
+    hasSettings: !!document.getElementById('settingsModal')
   });
 }
 
