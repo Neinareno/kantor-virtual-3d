@@ -13,10 +13,14 @@ Bisa juga membuka `index.html` langsung di browser (perlu internet untuk memuat 
 - **Mouse**: melihat sekeliling (klik untuk mengunci kursor, Esc untuk melepas)
 - **V**: ganti sudut pandang (orang ketiga / orang pertama)
 - Klik meja atau staf, isi formulir **Beri Tugas**, lalu **Kirim**
-- Tab GitHub akan terbuka; klik **Create issue** (masuk sebagai Neinareno) agar tugas diteruskan ke Klaus
-- Daftar staf atau peta: pindah ke meja
-- **Riwayat Tugas**: lihat tugas yang sudah dibuka dari kantor ini
+- Satu klik mengirim tugas ke Klaus setelah token GitHub disimpan di **Pengaturan**
+- **Riwayat Tugas**: lihat tugas yang sudah dikirim, plus **Cek status** jika issue sudah diteruskan
 
-## Secret webhook
+## Token GitHub (satu kali)
 
-GitHub Actions meneruskan issue berlabel `tugas` (dibuat oleh Neinareno) ke webhook Klaus. Buat secret repositori bernama **`GROK_WEBHOOK_AUTH`** berisi Authorization header (boleh dengan atau tanpa awalan `Bearer `).
+1. Buka [tautan buat token fine-grained](https://github.com/settings/personal-access-tokens/new?name=Kantor%20Virtual%203D&description=Kirim%20tugas%20dari%20kantor&target_name=Neinareno&expires_in=none&issues=write) (nama, deskripsi, pemilik, masa berlaku, dan izin Issues sudah terisi).
+2. **Repository access** → **Only select repositories** → pilih **kantor-virtual-3d** (tidak bisa diisi otomatis dari tautan).
+3. **Permissions** → **Issues: Read and write**, lalu **Generate** dan salin token.
+4. Tempel di Pengaturan kantor, **Simpan**, lalu **Tes token**.
+
+Token hanya tersimpan di peramban, tidak masuk repositori. Secret Actions **`GROK_WEBHOOK_AUTH`** tetap diperlukan agar workflow meneruskan issue ke Klaus.

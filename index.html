@@ -313,7 +313,22 @@
     #historyList .badge.terkirim { background: rgba(11,107,58,0.12); color: var(--uin-green-dark); }
     #historyList .badge.gagal { background: rgba(168,30,30,0.12); color: #8a1a1a; }
     #historyList .badge.menunggu { background: rgba(201,162,39,0.2); color: #6b5310; }
+    #historyList .badge.diteruskan { background: rgba(11,107,58,0.18); color: var(--uin-green-dark); }
     #historyEmpty { font-size: 13px; color: #4a5c50; }
+    #historyList .issue-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+    .cek-btn {
+      border: 1px solid rgba(11,107,58,0.35); background: #fff; color: var(--uin-green-dark);
+      font: 700 11px "Plus Jakarta Sans", sans-serif; padding: 4px 8px; border-radius: 999px; cursor: pointer;
+    }
+    .cek-btn:hover { background: rgba(11,107,58,0.08); }
+    .fallback-link { margin-top: 10px; font-size: 12px; text-align: center; }
+    .fallback-link a { color: var(--uin-green-dark); font-weight: 700; }
+    #tokenStatus { font-size: 12px; font-weight: 700; margin: 4px 0 10px; min-height: 1.2em; }
+    #tokenStatus.ok { color: var(--uin-green-dark); }
+    #tokenStatus.err { color: #8a1a1a; }
+    .help-note a { color: var(--uin-green); font-weight: 800; }
+    .help-note ol { margin: 8px 0 0 1.15em; padding: 0; }
+    .help-note li { margin: 4px 0; }
 
     #toastStack {
       position: fixed; z-index: 25; top: 72px; left: 50%;
@@ -424,7 +439,7 @@
     <div class="welcome-card">
       <div class="big-emblem" aria-hidden="true"></div>
       <h1><em>Kantor Virtual</em> Humas UIN Walisongo</h1>
-      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf, lalu isi formulir Beri Tugas. Kirim akan membuka issue GitHub; setelah Anda klik Create, tugas diteruskan ke Klaus.</p>
+      <p>Selamat datang di kantor virtual Humas. Klaus, Manajer Umum &amp; Big Boss, memimpin para staf spesialis. Jalan-jalan di kantor, klik meja atau staf, lalu isi formulir Beri Tugas. Setelah token GitHub disimpan di Pengaturan, satu klik Kirim meneruskan tugas ke Klaus.</p>
       <button type="button" id="enterBtn">Masuk ke Kantor</button>
       <p class="keys">WASD atau panah untuk berjalan · Mouse untuk melihat · Klik staf untuk berinteraksi · V ganti sudut pandang · Kirim tugas lewat GitHub</p>
     </div>
@@ -497,6 +512,7 @@
           </label>
         </div>
         <button type="submit" class="gold-btn" id="btnKirimTugas">Kirim</button>
+        <p class="fallback-link">Tidak bisa kirim otomatis? <a id="githubFallback" href="#" target="_blank" rel="noopener noreferrer">Buka formulir issue di GitHub</a></p>
       </form>
     </div>
   </div>
@@ -513,8 +529,28 @@
         <button type="button" class="cam-toggle" id="closeSettings" aria-label="Tutup">×</button>
       </header>
       <div class="modal-body">
-        <p class="help-note">Tugas tidak dikirim langsung dari peramban (CORS memblokir webhook). Alurnya: isi formulir <b>Beri Tugas</b> di meja staf atau Klaus, klik <b>Kirim</b>, lalu di tab GitHub klik <b>Create issue</b> (masuk sebagai Neinareno). GitHub Actions akan meneruskan tugas ke Klaus dan menulis komentar di issue.</p>
-        <p class="help-note">Kunci webhook tidak perlu ditempel di halaman ini. Simpan Authorization header sebagai secret repositori bernama <b>GROK_WEBHOOK_AUTH</b> (boleh dengan atau tanpa awalan Bearer).</p>
+        <p class="help-note">Agar pengiriman cukup satu klik, simpan token GitHub di peramban ini saja (tidak pernah masuk repositori). <a id="tokenCreateLink" href="https://github.com/settings/personal-access-tokens/new?name=Kantor%20Virtual%203D&description=Kirim%20tugas%20dari%20kantor&target_name=Neinareno&expires_in=none&issues=write" target="_blank" rel="noopener noreferrer">Buat token fine-grained (formulir sudah terisi)</a></p>
+        <div class="help-note">
+          Langkah:
+          <ol>
+            <li>Buka tautan di atas (nama, deskripsi, pemilik Neinareno, tanpa kedaluwarsa, dan izin Issues sudah terisi).</li>
+            <li><b>Repository access</b> → <b>Only select repositories</b> → pilih <b>kantor-virtual-3d</b> (pilihan repositori tidak bisa diisi otomatis dari tautan).</li>
+            <li><b>Permissions</b> → <b>Issues: Read and write</b>, lalu <b>Generate</b> dan salin token.</li>
+            <li>Tempel di bawah, klik <b>Simpan</b>, lalu <b>Tes token</b>.</li>
+          </ol>
+        </div>
+        <form id="settingsForm" autocomplete="off">
+          <label>Token GitHub
+            <input id="githubToken" name="githubToken" type="password" spellcheck="false" autocomplete="off" placeholder="github_pat_…" />
+          </label>
+          <label class="show-auth"><input type="checkbox" id="showToken" /> Tampilkan token</label>
+          <p id="tokenStatus"></p>
+          <div class="modal-actions">
+            <button type="submit" class="gold-btn" id="saveSettings">Simpan</button>
+            <button type="button" class="ghost-btn" id="testToken">Tes token</button>
+            <button type="button" class="ghost-btn" id="clearSettings">Hapus</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1898,8 +1934,44 @@ function drawMinimap() {
 }
 
 const LS_HIST = 'kv3d.taskHistory';
+const LS_TOKEN = 'kv3d.githubToken';
 const ISSUE_NEW_URL = 'https://github.com/Neinareno/kantor-virtual-3d/issues/new';
+const ISSUE_API = 'https://api.github.com/repos/Neinareno/kantor-virtual-3d/issues';
+const REPO_API = 'https://api.github.com/repos/Neinareno/kantor-virtual-3d';
+const TOKEN_CREATE_URL = 'https://github.com/settings/personal-access-tokens/new?name=Kantor%20Virtual%203D&description=Kirim%20tugas%20dari%20kantor&target_name=Neinareno&expires_in=none&issues=write';
 const UI_SEL = '.hud, #infoPanel, #welcome, #touch, button, aside, a, #settingsModal, #historyModal, #toastStack, input, textarea, select, label, form';
+
+function normalizeToken(raw) {
+  return String(raw || '').trim().replace(/^(Bearer|token)\s+/i, '').trim();
+}
+
+function getStoredToken() {
+  try { return normalizeToken(localStorage.getItem(LS_TOKEN) || ''); }
+  catch (err) { return ''; }
+}
+
+function githubHeaders(token, jsonBody = false) {
+  const headers = {
+    'Authorization': 'Bearer ' + token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  if (jsonBody) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
+function setTokenStatus(text, kind) {
+  const el = document.getElementById('tokenStatus');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = kind ? kind : '';
+}
+
+function authErrorMessage(status) {
+  if (status === 401) return 'Token salah atau kedaluwarsa. Buat token baru di Pengaturan.';
+  if (status === 403 || status === 404) return 'Akses kurang. Pastikan token punya izin Issues: Read and write dan akses repositori kantor-virtual-3d.';
+  return 'Gagal menghubungi GitHub (HTTP ' + status + ').';
+}
 
 function isTypingTarget(el) {
   if (!el) return false;
@@ -1948,13 +2020,21 @@ function renderHistory() {
   empty.style.display = list.length ? 'none' : 'block';
   list.forEach((item) => {
     const li = document.createElement('li');
-    const status = ['terkirim', 'gagal', 'menunggu'].includes(item.status) ? item.status : 'gagal';
+    const status = ['terkirim', 'gagal', 'menunggu', 'diteruskan'].includes(item.status) ? item.status : 'gagal';
     const tugas = String(item.tugas || '').trim();
     const short = tugas.length > 140 ? tugas.slice(0, 137) + '…' : tugas;
     const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const num = item.issueNumber;
+    let extra = '';
+    if (num) {
+      const href = esc(item.issueUrl || ('https://github.com/Neinareno/kantor-virtual-3d/issues/' + num));
+      extra = `<div class="issue-actions"><a href="${href}" target="_blank" rel="noopener noreferrer">Issue #${esc(num)}</a>`
+        + (status === 'diteruskan' ? '' : `<button type="button" class="cek-btn" data-cek-issue="${esc(num)}">Cek status</button>`)
+        + `</div>`;
+    }
     li.innerHTML = `<div class="meta"><span>${esc(formatWhen(item.dikirim_pada))}</span><span class="badge ${status}">${status}</span></div>
       <div><b>${esc(item.staf || '')}</b>${item.jabatan ? ' · ' + esc(item.jabatan) : ''}</div>
-      <div>${esc(short)}</div>`;
+      <div>${esc(short)}</div>${extra}`;
     ul.appendChild(li);
   });
 }
@@ -1973,7 +2053,16 @@ function anyModalOpen() {
     || document.getElementById('historyModal').classList.contains('open');
 }
 
+function fillSettingsForm() {
+  const input = document.getElementById('githubToken');
+  if (input) input.value = getStoredToken();
+  setTokenStatus('', '');
+  const link = document.getElementById('tokenCreateLink');
+  if (link) link.href = TOKEN_CREATE_URL;
+}
+
 function openSettings() {
+  fillSettingsForm();
   openModal('settingsModal');
 }
 
@@ -1997,10 +2086,14 @@ function ringkasTugas(tugas) {
   return one.length > 48 ? one.slice(0, 45) + '…' : one;
 }
 
-function buildIssueUrl(payload) {
+function issueTitle(payload) {
   let title = '[Tugas] ' + payload.staf + ': ' + ringkasTugas(payload.tugas);
   if (title.length > 240) title = title.slice(0, 237) + '…';
-  const body = [
+  return title;
+}
+
+function issueBody(payload) {
+  return [
     '## Tugas dari Kantor Virtual 3D',
     '',
     '- **Staf:** ' + payload.staf,
@@ -2016,25 +2109,26 @@ function buildIssueUrl(payload) {
     '```',
     ''
   ].join('\n');
-  const params = new URLSearchParams({ title, labels: 'tugas', body });
+}
+
+function buildIssueUrl(payload) {
+  const params = new URLSearchParams({ title: issueTitle(payload), labels: 'tugas', body: issueBody(payload) });
   return ISSUE_NEW_URL + '?' + params.toString();
 }
 
-function sendTask(ev) {
-  ev.preventDefault();
-  ev.stopPropagation();
+function collectPayload() {
   const s = staffById(selectedId);
   if (!s) {
     showToast('Pilih staf terlebih dahulu.', 'err');
-    return;
+    return null;
   }
   const tugas = document.getElementById('tugasText').value.trim();
   if (!tugas) {
     showToast('Isi tugas terlebih dahulu.', 'err');
     document.getElementById('tugasText').focus();
-    return;
+    return null;
   }
-  const payload = {
+  return {
     staf: s.name,
     jabatan: s.title,
     tugas,
@@ -2043,26 +2137,166 @@ function sendTask(ev) {
     dikirim_pada: new Date().toISOString(),
     sumber: 'kantor-virtual-3d'
   };
-  const issueUrl = buildIssueUrl(payload);
-  const opened = window.open(issueUrl, '_blank', 'noopener,noreferrer');
-  recordTask({
-    staf: payload.staf,
-    jabatan: payload.jabatan,
-    tugas: payload.tugas,
-    prioritas: payload.prioritas,
-    tenggat: payload.tenggat,
-    dikirim_pada: payload.dikirim_pada,
-    status: opened ? 'menunggu' : 'gagal',
-    error: opened ? undefined : 'popup-blocked'
-  });
-  if (!opened) {
-    showToast('Izinkan jendela baru, lalu klik Kirim lagi. Klik Create di GitHub untuk mengirim tugas.', 'err');
-    return;
-  }
+}
+
+function resetTaskForm() {
   document.getElementById('tugasText').value = '';
   document.getElementById('tugasPrioritas').value = '';
   document.getElementById('tugasTenggat').value = '';
+}
+
+function openGithubFallback(payload, record) {
+  const opened = window.open(buildIssueUrl(payload), '_blank', 'noopener,noreferrer');
+  if (record) {
+    recordTask({
+      staf: payload.staf,
+      jabatan: payload.jabatan,
+      tugas: payload.tugas,
+      prioritas: payload.prioritas,
+      tenggat: payload.tenggat,
+      dikirim_pada: payload.dikirim_pada,
+      status: opened ? 'menunggu' : 'gagal',
+      error: opened ? undefined : 'popup-blocked'
+    });
+  }
+  if (!opened) {
+    showToast('Izinkan jendela baru, lalu coba lagi. Atau izinkan pop-up untuk GitHub.', 'err');
+    return false;
+  }
   showToast('Klik Create di GitHub untuk mengirim tugas');
+  return true;
+}
+
+async function sendTask(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const payload = collectPayload();
+  if (!payload) return;
+  const token = getStoredToken();
+  if (!token) {
+    showToast('Simpan token GitHub di Pengaturan agar tugas terkirim sekali klik.', 'err');
+    openSettings();
+    return;
+  }
+  const btn = document.getElementById('btnKirimTugas');
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Mengirim…';
+  try {
+    const res = await fetch(ISSUE_API, {
+      method: 'POST',
+      headers: githubHeaders(token, true),
+      body: JSON.stringify({
+        title: issueTitle(payload),
+        body: issueBody(payload),
+        labels: ['tugas']
+      })
+    });
+    if (res.status === 201) {
+      const data = await res.json();
+      recordTask({
+        staf: payload.staf,
+        jabatan: payload.jabatan,
+        tugas: payload.tugas,
+        prioritas: payload.prioritas,
+        tenggat: payload.tenggat,
+        dikirim_pada: payload.dikirim_pada,
+        status: 'terkirim',
+        issueNumber: data.number,
+        issueUrl: data.html_url
+      });
+      resetTaskForm();
+      showToast('Tugas terkirim ke Klaus ✅');
+    } else {
+      const msg = authErrorMessage(res.status);
+      recordTask({
+        staf: payload.staf,
+        jabatan: payload.jabatan,
+        tugas: payload.tugas,
+        prioritas: payload.prioritas,
+        tenggat: payload.tenggat,
+        dikirim_pada: payload.dikirim_pada,
+        status: 'gagal',
+        error: 'HTTP ' + res.status
+      });
+      showToast(msg, 'err');
+      if (res.status === 401 || res.status === 403 || res.status === 404) openSettings();
+    }
+  } catch (err) {
+    recordTask({
+      staf: payload.staf,
+      jabatan: payload.jabatan,
+      tugas: payload.tugas,
+      prioritas: payload.prioritas,
+      tenggat: payload.tenggat,
+      dikirim_pada: payload.dikirim_pada,
+      status: 'gagal',
+      error: String(err && err.message || err)
+    });
+    showToast('Gagal mengirim tugas. Periksa koneksi, atau gunakan tautan cadangan ke GitHub.', 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = prev;
+}
+
+async function testToken() {
+  const field = document.getElementById('githubToken');
+  const token = normalizeToken((field && field.value) || getStoredToken());
+  if (!token) {
+    setTokenStatus('Tempel token GitHub terlebih dahulu.', 'err');
+    showToast('Tempel token GitHub terlebih dahulu.', 'err');
+    return;
+  }
+  const btn = document.getElementById('testToken');
+  btn.disabled = true;
+  setTokenStatus('Menguji token…', '');
+  try {
+    const res = await fetch(REPO_API, { headers: githubHeaders(token) });
+    if (res.ok) {
+      const data = await res.json();
+      setTokenStatus('Token OK. Akses ke ' + (data.full_name || 'repositori') + ' berhasil.', 'ok');
+      showToast('Token OK.');
+    } else {
+      const msg = authErrorMessage(res.status);
+      setTokenStatus(msg, 'err');
+      showToast(msg, 'err');
+    }
+  } catch (err) {
+    const msg = 'Gagal menguji token. Periksa koneksi.';
+    setTokenStatus(msg, 'err');
+    showToast(msg, 'err');
+  }
+  btn.disabled = false;
+}
+
+async function checkIssueStatus(num) {
+  const token = getStoredToken();
+  if (!token) {
+    showToast('Simpan token GitHub di Pengaturan untuk cek status.', 'err');
+    openSettings();
+    return;
+  }
+  try {
+    const res = await fetch(ISSUE_API + '/' + num + '/comments', { headers: githubHeaders(token) });
+    if (!res.ok) {
+      showToast(authErrorMessage(res.status), 'err');
+      return;
+    }
+    const comments = await res.json();
+    const forwarded = (Array.isArray(comments) ? comments : []).some((c) =>
+      /Tugas diteruskan ke Klaus|Diteruskan ✅/i.test((c && c.body) || '')
+    );
+    if (forwarded) {
+      const list = loadHistory().map((item) => item.issueNumber === num ? { ...item, status: 'diteruskan' } : item);
+      saveHistory(list);
+      renderHistory();
+      showToast('Diteruskan ✅');
+    } else {
+      showToast('Belum diteruskan. Tunggu workflow, lalu cek lagi.');
+    }
+  } catch (err) {
+    showToast('Gagal membaca status issue. Periksa koneksi.', 'err');
+  }
 }
 
 function onPointerClick(ev) {
@@ -2250,11 +2484,54 @@ function boot() {
   document.getElementById('historyModal').addEventListener('click', (e) => {
     if (e.target.id === 'historyModal') closeHistory();
   });
+  document.getElementById('showToken').addEventListener('change', (e) => {
+    document.getElementById('githubToken').type = e.target.checked ? 'text' : 'password';
+  });
+  document.getElementById('settingsForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const token = normalizeToken(document.getElementById('githubToken').value);
+    if (!token) {
+      setTokenStatus('Tempel token GitHub terlebih dahulu.', 'err');
+      showToast('Tempel token GitHub terlebih dahulu.', 'err');
+      return;
+    }
+    try { localStorage.setItem(LS_TOKEN, token); }
+    catch (err) {
+      showToast('Gagal menyimpan token di peramban.', 'err');
+      return;
+    }
+    document.getElementById('githubToken').value = token;
+    setTokenStatus('Token disimpan di peramban ini.', 'ok');
+    showToast('Token disimpan di peramban ini.');
+  });
+  document.getElementById('testToken').addEventListener('click', (e) => { e.stopPropagation(); testToken(); });
+  document.getElementById('clearSettings').addEventListener('click', (e) => {
+    e.stopPropagation();
+    try { localStorage.removeItem(LS_TOKEN); } catch (err) { /* ignore */ }
+    document.getElementById('githubToken').value = '';
+    setTokenStatus('Token dihapus dari peramban ini.', '');
+    showToast('Token dihapus dari peramban ini.');
+  });
   document.getElementById('clearHistory').addEventListener('click', (e) => {
     e.stopPropagation();
     try { localStorage.removeItem(LS_HIST); } catch (err) { /* ignore */ }
     renderHistory();
     showToast('Riwayat tugas dihapus.');
+  });
+  document.getElementById('historyList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-cek-issue]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    checkIssueStatus(Number(btn.getAttribute('data-cek-issue')));
+  });
+  document.getElementById('githubFallback').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const payload = collectPayload();
+    if (!payload) return;
+    if (openGithubFallback(payload, true)) resetTaskForm();
   });
   document.getElementById('tugasForm').addEventListener('submit', sendTask);
   document.getElementById('enterBtn').addEventListener('click', (e) => {
