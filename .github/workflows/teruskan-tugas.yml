@@ -2,7 +2,7 @@ name: Teruskan tugas ke Klaus
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 concurrency:
   group: teruskan-tugas-${{ github.event.issue.number }}
@@ -25,8 +25,7 @@ jobs:
             contains(join(github.event.issue.labels.*.name, ','), 'tugas') ||
             startsWith(github.event.issue.title, '[Tugas]')
           )
-        ) ||
-        (github.event.action == 'labeled' && github.event.label.name == 'tugas')
+        )
       )
     steps:
       - name: Checkout

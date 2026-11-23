@@ -54,7 +54,9 @@ def extract_payload(body: str) -> dict:
 
 
 def authorization_header(raw: str) -> str:
-    value = (raw or "").strip()
+    value = (raw or "").strip().strip('"').strip("'").strip()
+    if value.lower().startswith("authorization:"):
+        value = value.split(":", 1)[1].strip()
     if not value:
         fail("Secret GROK_WEBHOOK_AUTH belum diisi.")
     if not value.lower().startswith("bearer "):
